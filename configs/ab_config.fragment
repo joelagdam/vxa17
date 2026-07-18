@@ -1,0 +1,21 @@
+# A/B Slot Support Configuration Fragment
+# Enables A/B partition awareness in kernel
+
+# Android Boot Control (for A/B slot management)
+CONFIG_ANDROID_SLOT=y
+
+# Boot Control HAL support
+CONFIG_BOOTCTRL=y
+
+# Verified Boot (AVB) with A/B
+CONFIG_DM_VERITY=y
+CONFIG_DM_VERITY_FEC=y
+
+# Dynamic Partitions (super partition support)
+CONFIG_BLK_DEV_DM=y
+CONFIG_DM_CRYPT=y
+CONFIG_DM_DEFAULT_KEY=y
+CONFIG_DM_SNAPSHOT=y
+
+# A/B Update Engine support
+CONFIG_UPDATE_ENGINE=y

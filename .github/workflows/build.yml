@@ -1,4 +1,4 @@
-name: Build Kernel for Redmi 9T (lime)
+name: Build Kernel for Redmi 9T (lime) - A/B
 
 on:
   push:
@@ -30,14 +30,14 @@ jobs:
           tar xzf clang-r536225.tar.gz -C clang
           echo "$PWD/clang/bin" >> $GITHUB_PATH
 
-      - name: Build kernel
+      - name: Build kernel (A/B)
         run: |
           chmod +x build.sh
           ./build.sh
 
-      - name: Upload kernel artifacts
+      - name: Upload kernel artifacts (A/B)
         uses: actions/upload-artifact@v4
         with:
-          name: kernel-lime-a17
+          name: kernel-lime-a17-ab
           path: artifacts/
           retention-days: 30

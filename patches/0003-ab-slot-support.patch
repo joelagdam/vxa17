@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+Subject: [PATCH 3/3] android: configs: enable A/B slot support
+
+Enable Android A/B slot support for Redmi 9T (lime/chime) to support
+dual-boot and A/B OTA updates.
+
+Changes:
+- CONFIG_ANDROID_SLOT=y for boot slot management
+- CONFIG_BOOTCTRL=y for boot control HAL
+- CONFIG_DM_VERITY=y for verified boot with A/B
+- CONFIG_BLK_DEV_DM=y for dynamic partitions in super
+
+Signed-off-by: Kent <kent@build.local>
+---
+ arch/arm64/configs/vendor/bengal_defconfig | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/arch/arm64/configs/vendor/bengal_defconfig b/arch/arm64/configs/vendor/bengal_defconfig
+index abcdef1..1234567 100644
+--- a/arch/arm64/configs/vendor/bengal_defconfig
++++ b/arch/arm64/configs/vendor/bengal_defconfig
+@@ -123,6 +123,18 @@
+ # CONFIG_CGROUP_RDMA is not set
+ CONFIG_CGROUP_FREEZER=y
+ 
++# A/B Slot Support
++CONFIG_ANDROID_SLOT=y
++CONFIG_BOOTCTRL=y
++
++# Verified Boot with A/B
++CONFIG_DM_VERITY=y
++CONFIG_DM_VERITY_FEC=y
++
++# Dynamic Partitions (super partition)
++CONFIG_BLK_DEV_DM=y
++CONFIG_DM_CRYPT=y
++CONFIG_DM_DEFAULT_KEY=y
++CONFIG_DM_SNAPSHOT=y
++
+ # CONFIG_CGROUP_DEVICE is not set
+ CONFIG_CGROUP_CPUACCT=y
+ # CONFIG_CGROUP_PERF is not set
+-- 
+2.39.0
