@@ -1,0 +1,43 @@
+name: Build Kernel for Redmi 9T (lime)
+
+on:
+  push:
+    branches: [main, android16]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential bc flex bison libssl-dev libelf-dev \
+            python3 gcc-aarch64-linux-gnu device-tree-compiler
+
+      - name: Setup Clang toolchain
+        run: |
+          wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
+          mkdir -p clang
+          tar xzf clang-r536225.tar.gz -C clang
+          echo "$PWD/clang/bin" >> $GITHUB_PATH
+
+      - name: Build kernel
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Upload kernel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-lime-a17
+          path: artifacts/
+          retention-days: 30
