@@ -23,13 +23,6 @@ jobs:
             build-essential bc flex bison libssl-dev libelf-dev \
             python3 gcc-aarch64-linux-gnu device-tree-compiler
 
-      - name: Setup Clang toolchain
-        run: |
-          wget -q "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r536225.tar.gz"
-          mkdir -p clang
-          tar xzf clang-r536225.tar.gz -C clang
-          echo "$PWD/clang/bin" >> $GITHUB_PATH
-
       - name: Build kernel
         run: |
           chmod +x build.sh
