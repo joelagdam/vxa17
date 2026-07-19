@@ -1,0 +1,84 @@
+From: VXA17 Kernel Team
+Date: Sun Jul 19 2026
+Subject: [PATCH] PMI632: Dynamically force flash boost on FLASH_ACTIVE
+
+Instead of a one-time init choice between FIXED_MODE (torch works,
+charging dead) and ADAPTIVE_MODE (charging works, torch dead),
+dynamically toggle FORCE_FLASH_BOOST_5V_BIT and TORCH_PRIORITY_CONTROL_BIT
+when the camera framework sets FLASH_ACTIVE.
+
+This allows:
+- Torch ON  → boost forced → physical LED works (USB charging suspended)
+- Torch OFF → boost released → USB charging resumes immediately
+
+DTB must set qcom,headroom-mode = <1> (ADAPTIVE_MODE) so init doesn't
+permanently force boost.
+
+Signed-off-by: VXA17 Kernel Team
+---
+ drivers/power/supply/qcom/schgm-flash.h  |  1 +
+ drivers/power/supply/qcom/schgm-flash.c  | 28 +++++++++++++++++++++++
+ drivers/power/supply/qcom/qpnp-smb5.c    |  2 ++
+ 3 files changed, 31 insertions(+)
+
+diff --git a/drivers/power/supply/qcom/schgm-flash.h b/drivers/power/supply/qcom/schgm-flash.h
+index d1aab2a6f9f2..25fb027f4c29 100644
+--- a/drivers/power/supply/qcom/schgm-flash.h
++++ b/drivers/power/supply/qcom/schgm-flash.h
+@@ -50,4 +50,5 @@ irqreturn_t schgm_flash_default_irq_handler(int irq, void *data);
+ irqreturn_t schgm_flash_ilim2_irq_handler(int irq, void *data);
+ irqreturn_t schgm_flash_state_change_irq_handler(int irq, void *data);
++void schgm_flash_set_active(struct smb_charger *chg, bool active);
+ #endif /* __SCHGM_FLASH_H__ */
+diff --git a/drivers/power/supply/qcom/schgm-flash.c b/drivers/power/supply/qcom/schgm-flash.c
+index e7db426c3830..233e6c2bcee1 100644
+--- a/drivers/power/supply/qcom/schgm-flash.c
++++ b/drivers/power/supply/qcom/schgm-flash.c
+@@ -97,6 +97,34 @@ bool is_flash_active(struct smb_charger *chg)
+ 	return chg->flash_active ? true : false;
+ }
+ 
++void schgm_flash_set_active(struct smb_charger *chg, bool active)
++{
++	int rc;
++	u8 reg;
++
++	reg = active ? FORCE_FLASH_BOOST_5V_BIT : 0;
++	rc = smblib_masked_write(chg, SCHGM_FORCE_BOOST_CONTROL,
++			FORCE_FLASH_BOOST_5V_BIT, reg);
++	if (rc < 0) {
++		pr_err("Couldn't %s flash boost rc=%d\n",
++			active ? "force" : "release", rc);
++		return;
++	}
++
++	reg = active ? TORCH_PRIORITY_CONTROL_BIT : 0;
++	rc = smblib_masked_write(chg, SCHGM_TORCH_PRIORITY_CONTROL_REG,
++			TORCH_PRIORITY_CONTROL_BIT, reg);
++	if (rc < 0) {
++		pr_err("Couldn't %s torch priority rc=%d\n",
++			active ? "set" : "clear", rc);
++		return;
++	}
++
++	pr_debug("flash active=%d boost=%s\n", active,
++		active ? "forced 5V" : "adaptive");
++}
++EXPORT_SYMBOL(schgm_flash_set_active);
++
+ int schgm_flash_get_vreg_ok(struct smb_charger *chg, int *val)
+ {
+ 	int rc, vreg_state;
+diff --git a/drivers/power/supply/qcom/qpnp-smb5.c b/drivers/power/supply/qcom/qpnp-smb5.c
+index 8e33f05bf6a0..44b4869ad1c9 100644
+--- a/drivers/power/supply/qcom/qpnp-smb5.c
++++ b/drivers/power/supply/qcom/qpnp-smb5.c
+@@ -1452,6 +1452,8 @@ static int smb5_set_prop(struct smb_charger *chg, enum power_supply_property psp
+ 		if ((chg->chg_param.smb_version == PMI632_SUBTYPE)
+ 				&& (chg->flash_active != val->intval)) {
+ 			chg->flash_active = val->intval;
++
++			schgm_flash_set_active(chg, !!chg->flash_active);
+ 
+ 			rc = smblib_get_prop_usb_present(chg, &pval);
+ 			if (rc < 0)

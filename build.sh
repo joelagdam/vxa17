@@ -16,6 +16,10 @@ fi
 
 cd $KERNEL_SOURCE
 
+# Apply PMI632 dynamic flash boost patch (torch + charging fix)
+echo "[1a/5] Applying PMI632 flash boost patch..."
+patch -p1 -N -r- < ../patches/0001-dynamic-flash-boost.patch 2>/dev/null || true
+
 # Create missing min-tool-version.sh (missing from valeryn repo)
 cat > scripts/min-tool-version.sh << 'MINTOOLEOF'
 #!/bin/sh

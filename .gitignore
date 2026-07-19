@@ -28,3 +28,5 @@ tools/objtool/objtool
 .idea/
 .DS_Store
 Thumbs.db
+outputs/
+build.log
