@@ -16,14 +16,6 @@ fi
 
 cd $KERNEL_SOURCE
 
-# Fix missing/empty firmware sample for FT8719 touchscreen
-# The repo has an empty fw_sample.i placeholder; ensure it has valid C content
-FW_SAMPLE="drivers/input/touchscreen/FT8719/include/firmware/fw_sample.i"
-if [ ! -s "$FW_SAMPLE" ]; then
-    mkdir -p "$(dirname "$FW_SAMPLE")"
-    echo "0" > "$FW_SAMPLE"
-fi
-
 # Create missing min-tool-version.sh (missing from valeryn repo)
 cat > scripts/min-tool-version.sh << 'MINTOOLEOF'
 #!/bin/sh
@@ -42,6 +34,14 @@ chmod +x scripts/min-tool-version.sh
 # Clean source tree (use O= to target source tree, not out/)
 echo "[2/5] Cleaning source tree..."
 make O= mrproper || true
+
+# Fix missing/empty firmware sample for FT8719 touchscreen
+# Must be AFTER mrproper since .i files are treated as intermediates and get cleaned
+FW_SAMPLE="drivers/input/touchscreen/FT8719/include/firmware/fw_sample.i"
+if [ ! -s "$FW_SAMPLE" ]; then
+    mkdir -p "$(dirname "$FW_SAMPLE")"
+    echo "0" > "$FW_SAMPLE"
+fi
 
 # Configure — use out/ directory for build artifacts
 echo "[3/5] Configuring kernel..."
