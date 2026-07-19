@@ -43,6 +43,27 @@ make ARCH=arm64 LLVM=1 O=out vendor/bengal-perf_defconfig
 scripts/config --file out/.config -d CC_WERROR || true
 make ARCH=arm64 LLVM=1 O=out olddefconfig
 
+# Merge official Android 17 base config fragment for 4.19
+echo "[3a/5] Merging Android 17 base config..."
+# -m: merge only, don't run internal make (we olddefconfig ourselves below)
+scripts/kconfig/merge_config.sh -m -O out out/.config ../configs/android-base-4.19.config || true
+
+# ARM64 conditional requirements (from android-base-conditional.xml)
+scripts/config --file out/.config -e ARM64_PAN
+scripts/config --file out/.config -e ARM64_SW_TTBR0_PAN
+scripts/config --file out/.config -e ARMV8_DEPRECATED
+scripts/config --file out/.config -e COMPAT
+scripts/config --file out/.config -e CP15_BARRIER_EMULATION
+scripts/config --file out/.config -e SETEND_EMULATION
+scripts/config --file out/.config -e SWP_EMULATION
+scripts/config --file out/.config -e BPF_JIT_ALWAYS_ON
+
+# Fix empty usermodehelper path (Android 14+ requires non-empty)
+scripts/config --file out/.config --set-str STATIC_USERMODEHELPER_PATH /sbin/umhelper
+
+# Resolve any new dependencies from the merge
+make ARCH=arm64 LLVM=1 O=out olddefconfig
+
 # Build — capture full output to log file for debugging
 echo "[4/5] Building kernel with Clang/LLVM..."
 make ARCH=arm64 LLVM=1 O=out -j$(nproc) 2>&1 | tee ../build.log
