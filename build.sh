@@ -31,11 +31,12 @@ esac
 MINTOOLEOF
 chmod +x scripts/min-tool-version.sh
 
-# Clean
-make mrproper || true
+# Clean source tree explicitly (default KBUILD_OUTPUT=out skips source tree cleanup)
+echo "[2/5] Cleaning source tree..."
+make O= mrproper || true
 
 # Configure
-echo "[2/5] Configuring kernel..."
+echo "[3/5] Configuring kernel..."
 make ARCH=arm64 LLVM=1 vendor/bengal-perf_defconfig
 
 # Disable CC_WERROR — newer compilers may emit warnings on 4.19 code
@@ -43,11 +44,11 @@ scripts/config --file .config -d CC_WERROR || true
 make ARCH=arm64 LLVM=1 olddefconfig
 
 # Build
-echo "[3/5] Building kernel with Clang/LLVM..."
+echo "[4/5] Building kernel with Clang/LLVM..."
 make ARCH=arm64 LLVM=1 -j$(nproc)
 
 # Package
-echo "[4/5] Packaging..."
+echo "[5/5] Packaging..."
 mkdir -p ../artifacts
 cp arch/arm64/boot/Image.gz-dtb ../artifacts/ 2>/dev/null || \
 cp arch/arm64/boot/Image.gz ../artifacts/ 2>/dev/null || \
