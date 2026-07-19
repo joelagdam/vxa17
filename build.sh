@@ -43,9 +43,21 @@ make ARCH=arm64 LLVM=1 O=out vendor/bengal-perf_defconfig
 scripts/config --file out/.config -d CC_WERROR || true
 make ARCH=arm64 LLVM=1 O=out olddefconfig
 
-# Build
+# Build — capture full output to log file for debugging
 echo "[4/5] Building kernel with Clang/LLVM..."
-make ARCH=arm64 LLVM=1 O=out -j$(nproc)
+make ARCH=arm64 LLVM=1 O=out -j$(nproc) 2>&1 | tee ../build.log
+BUILD_EXIT=${PIPESTATUS[0]}
+
+if [ $BUILD_EXIT -ne 0 ]; then
+    echo ""
+    echo "=== BUILD FAILED (exit code $BUILD_EXIT) ==="
+    echo "=== Last 50 lines of build log: ==="
+    tail -50 ../build.log
+    echo ""
+    echo "=== Searching for error lines: ==="
+    grep -i "error:" ../build.log | tail -30
+    exit $BUILD_EXIT
+fi
 
 # Package
 echo "[5/5] Packaging..."
