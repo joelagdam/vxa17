@@ -21,7 +21,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential bc flex bison libssl-dev libelf-dev \
-            python3 gcc-aarch64-linux-gnu device-tree-compiler
+            python3 clang lld llvm device-tree-compiler
 
       - name: Build kernel
         run: |
