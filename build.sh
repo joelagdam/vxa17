@@ -16,6 +16,13 @@ fi
 
 cd $KERNEL_SOURCE
 
+# Fix missing/empty firmware sample for FT8719 touchscreen
+# The repo has an empty fw_sample.i placeholder; ensure it has valid C content
+FW_SAMPLE="drivers/input/touchscreen/FT8719/include/firmware/fw_sample.i"
+if [ -f "$FW_SAMPLE" ] && [ ! -s "$FW_SAMPLE" ]; then
+    echo "0" > "$FW_SAMPLE"
+fi
+
 # Create missing min-tool-version.sh (missing from valeryn repo)
 cat > scripts/min-tool-version.sh << 'MINTOOLEOF'
 #!/bin/sh
