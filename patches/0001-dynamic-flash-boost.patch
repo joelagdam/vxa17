@@ -11,15 +11,16 @@ This allows:
 - Torch ON  → boost forced → physical LED works (USB charging suspended)
 - Torch OFF → boost released → USB charging resumes immediately
 
-DTB must set qcom,headroom-mode = <1> (ADAPTIVE_MODE) so init doesn't
-permanently force boost.
+schgm_flash_set_active(false) is called at end of init to clear init's
+forced boost in FIXED_MODE, ensuring charging works at boot regardless
+of DTBO's headroom-mode.
 
 Signed-off-by: VXA17 Kernel Team
 ---
  drivers/power/supply/qcom/schgm-flash.h  |  1 +
- drivers/power/supply/qcom/schgm-flash.c  | 28 +++++++++++++++++++++++
+ drivers/power/supply/qcom/schgm-flash.c  | 32 +++++++++++++++++++++++++++++++
  drivers/power/supply/qcom/qpnp-smb5.c    |  2 ++
- 3 files changed, 31 insertions(+)
+ 3 files changed, 35 insertions(+)
 
 diff --git a/drivers/power/supply/qcom/schgm-flash.h b/drivers/power/supply/qcom/schgm-flash.h
 index d1aab2a6f9f2..25fb027f4c29 100644
@@ -69,6 +70,16 @@ index e7db426c3830..233e6c2bcee1 100644
  int schgm_flash_get_vreg_ok(struct smb_charger *chg, int *val)
  {
  	int rc, vreg_state;
+@@ -285,6 +313,8 @@ int schgm_flash_init(struct smb_charger *chg)
+ 		rc = smblib_read(chg, SCHGM_FLASH_CONTROL_REG, &reg);
+ 		if (!(reg & SOC_LOW_FOR_FLASH_EN_BIT))
+ 			pr_warn("Soc based flash derating not enabled\n");
+ 	}
++
++	schgm_flash_set_active(chg, false);
+ 
+ 	chg->flash_init_done = true;
+ 
 diff --git a/drivers/power/supply/qcom/qpnp-smb5.c b/drivers/power/supply/qcom/qpnp-smb5.c
 index 8e33f05bf6a0..44b4869ad1c9 100644
 --- a/drivers/power/supply/qcom/qpnp-smb5.c
